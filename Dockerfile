@@ -18,5 +18,5 @@ RUN pip install -r requirements.txt && \
 # Copy the current code to the 
 COPY . .
 
-# Run ResuLLMe with Streamlit
+# Run ResumeLLMe with Streamlit
 CMD [ "streamlit", "run", "src/Main.py" ]

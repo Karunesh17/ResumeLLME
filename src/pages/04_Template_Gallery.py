@@ -7,7 +7,7 @@ IFRAME = '<iframe src="https://ghbtns.com/github-btn.html?user=IvanIsCoding&repo
 
 st.markdown(
     f"""
-    # ResuLLMe's Template Gallery {IFRAME}
+    # ResumeLLMe's Template Gallery {IFRAME}
     """,
     unsafe_allow_html=True,
 )
@@ -32,7 +32,7 @@ st.markdown(
     ## Simple
 
     The most straightforward template, it also is the one that condenses the most information in a single page.
-    This is the default for ResuLLMe due to its reliability.
+    This is the default for ResumeLLMe due to its reliability.
     """
 )
 

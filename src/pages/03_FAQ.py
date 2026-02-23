@@ -1,15 +1,15 @@
 import streamlit as st
 
-IFRAME = '<iframe src="https://ghbtns.com/github-btn.html?user=IvanIsCoding&repo=ResuLLMe&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>'
+
 
 st.markdown(
     f"""
-    # ResuLLMe's Frequently Asked Questions {IFRAME}
+    # ResumeLLMe's Frequently Asked Questions 
     """,
     unsafe_allow_html=True,
 )
 
-with st.expander("**Do I need an OpenAI/Gemini API Key to run ResuLLMe?**"):
+with st.expander("**Do I need an OpenAI/Gemini API Key to run ResumeLLMe?**"):
     st.markdown(
     """
     **Yes**, as we currently only support ChatGPT and Google  Gemini. You can obtain your key [openai](https://platform.openai.com/account/api-keys)/[Gemini](https://aistudio.google.com/ ).
@@ -33,7 +33,7 @@ with st.expander("**I want to use my own custom format to render my résumé. Is
 with st.expander("**What is the LaTeX format?**"):
     st.markdown(
     """
-    LaTeX is a document preparation system that is used to render PDFs. ResuLLMe uses LaTeX to render a new AI-curated résumé in a format chosen by you!
+    LaTeX is a document preparation system that is used to render PDFs. ResumeLLMe uses LaTeX to render a new AI-curated résumé in a format chosen by you!
     """
     )
 
@@ -41,7 +41,7 @@ with st.expander("**What is the LaTeX format?**"):
 with st.expander("**What is the JSON schema for the résumé?**"):
     st.markdown(
     """
-    To render the LaTeX file, we use a JSON schema to format data and allow standardized processing. You can look at this [example](https://github.com/IvanIsCoding/ResuLLMe/blob/main/.github/Turing.json) to examine the schema.
+    To render the LaTeX file, we use a JSON schema to format data and allow standardized processing. You can look at this to examine the schema.
     """
     )
 

@@ -2,6 +2,8 @@ import streamlit as st
 import streamlit_ext as ste
 import os
 import openai
+import sys
+sys.path.append('src/pages')
 
 from doc_utils import extract_text_from_upload
 from templates import generate_latex, template_commands
@@ -44,10 +46,11 @@ def get_llm_model_and_api(model_type):
 
 
 if __name__ == '__main__':
-    IFRAME = '<iframe src="https://ghbtns.com/github-btn.html?user=lokendarjangid&repo=ResuLLMe&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>'
+     
+
 
     st.set_page_config(
-        page_title="ResuLLMe",
+        page_title="ResumeLLMe",
         page_icon=":clipboard:",
         layout="wide",
         initial_sidebar_state="auto",
@@ -55,13 +58,13 @@ if __name__ == '__main__':
 
     st.markdown(
         f"""
-        # ResuLLMe {IFRAME}
+        # ResumeLLMe 
         """,
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        "Welcome to ResuLLMe! Drop your previous CV below, select one of the templates, and let the LLMs generate your resume for you"
+        "Welcome to ResumeLLMe! Drop your previous CV below, select one of the templates, and let the LLMs generate your resume for you"
     )
 
     uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "json"])
