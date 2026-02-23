@@ -170,6 +170,11 @@ Write a work section for the candidate according to the Work schema. Include onl
 """
 
 
+import time # Ensure you import time at the top of your file
+import json
+import os
+# ... your other imports ...
+
 def generate_json_resume(cv_text, api_key, model="gpt-4o", model_type="OpenAI"):
     """Generate a JSON resume from a CV text"""
     sections = []
@@ -186,7 +191,7 @@ def generate_json_resume(cv_text, api_key, model="gpt-4o", model_type="OpenAI"):
         )
     elif model_type == "Gemini":
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(model)
+        model_instance = genai.GenerativeModel(model) # renamed slightly to avoid shadowing the 'model' string variable
 
     for prompt in stqdm(
             [
@@ -197,7 +202,7 @@ def generate_json_resume(cv_text, api_key, model="gpt-4o", model_type="OpenAI"):
                 SKILLS_PROMPT,
                 WORK_PROMPT,
             ],
-            desc="This may take a while...",
+            desc="Pacing API requests to avoid rate limits...",
     ):
         filled_prompt = prompt.replace(CV_TEXT_PLACEHOLDER, cv_text)
         if model_type == "OpenAI":
@@ -211,9 +216,10 @@ def generate_json_resume(cv_text, api_key, model="gpt-4o", model_type="OpenAI"):
             answer = response.choices[0].message.content
         elif model_type == "Gemini":
             full_prompt = f"{SYSTEM_TAILORING}\n\nUser: {filled_prompt}\nAssistant:"
-            response = model.generate_content(full_prompt)
+            response = model_instance.generate_content(full_prompt)
             answer = response.parts[0].text
             answer = answer.strip("'").replace("```json\n", "").replace("\n```", "")
+        
         try:
             answer = json.loads(answer)
 
@@ -222,7 +228,12 @@ def generate_json_resume(cv_text, api_key, model="gpt-4o", model_type="OpenAI"):
 
             sections.append(answer)
         except Exception as e:
-            print(f"Exception occurred.{e}")
+            print(f"Exception occurred. {e}")
+            
+        # --- RATE LIMIT PREVENTION DELAY ---
+        # Pauses the loop for 12 seconds before making the next API call.
+        # This spreads the 6 requests over >60 seconds.
+        time.sleep(12)
 
     final_json = {}
     for section in sections:

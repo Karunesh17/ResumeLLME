@@ -39,7 +39,7 @@ def get_llm_model_and_api(model_type):
                 "Enter your Gemini API Key: [(contact Gemini support for more details)]",
                 type="password",
             )
-        api_model = "gemini-1.5-flash"
+        api_model = "gemini-2.5-flash"
     return api_key, api_model
 
 
