@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# ResuLLMe [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://resullme.streamlit.app/) [![](https://img.shields.io/github/license/IvanIsCoding/ResuLLMe)](https://github.com/IvanIsCoding/ResuLLMe/blob/main/LICENSE) ![](https://img.shields.io/badge/code%20style-black-black)
+# ResumeLLMe 
 
 ---
 
@@ -9,21 +9,21 @@
 
 ## 🚀 Concept
 
-ResuLLMe is a prototype that uses Large Language Models (LLMs) to tailor résumés. It's goal is to enhance résumés to help candidates avoid common mistakes that occur while applying for jobs. It is like a smart career advisor to check your résumé.
+ResumeLLMe is a prototype that uses Large Language Models (LLMs) to tailor résumés. It's goal is to enhance résumés to help candidates avoid common mistakes that occur while applying for jobs. It is like a smart career advisor to check your résumé.
 
-You can use ResuLLMe live at [https://resullme.streamlit.app/](https://resullme.streamlit.app/).
+You can use ResuLLMe live at 
 
 ## 🛠 How It Works
-ResuLLMe now supports both OpenAI and Gemini, empowering the application to enhance résumés with even more powerful and diverse language models, providing users with smarter, more accurate career guidance.  
+ResumeLLMe now supports both OpenAI and Gemini, empowering the application to enhance résumés with even more powerful and diverse language models, providing users with smarter, more accurate career guidance.  
 
-ResuLLMe receives your previous CV as a PDF or Word Document. Then, it uses LLMs to:
+ResumeLLMe receives your previous CV as a PDF or Word Document. Then, it uses LLMs to:
 * Improve the résumé following published résumé guidelines by well-reputed schools
 * Convert the résumés to a JSON Resume format
 * Render the JSON resume using LaTeX to generate a new PDF of the enhanced resume
 
 ## 🏃 Running
 
-To run ResuLLMe locally, the simplest way is to use Docker:
+To run ResumeLLMe locally, the simplest way is to use Docker:
 
 ```
 docker-compose up -d
@@ -51,16 +51,6 @@ Lastly, to run ResuLLMe locally, execute:
 streamlit run src/Main.py
 ```
 
-## 🤲 Contributing
-
-ResuLLMe is an open source project.
-
-If you want to contribute, open a [Pull requests](https://github.com/360macky/project-name/pulls). 
-All contributions are welcome, but some that would particularly be useful to the community are:
-* Fixes in existing LaTeX templates
-* Adding new LaTeX templates
-* Improved prompts
-* Support for other LLMs (e.g. Bard, Claude, LLaMA)
 =======
 # ResumeLLME
 >>>>>>> f4f72138428c0ee4bb8ba8735960622b6a56262f
