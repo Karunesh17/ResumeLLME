@@ -11,7 +11,7 @@
 
 ResumeLLMe is a prototype that uses Large Language Models (LLMs) to tailor résumés. It's goal is to enhance résumés to help candidates avoid common mistakes that occur while applying for jobs. It is like a smart career advisor to check your résumé.
 
-You can use ResuLLMe live at 
+You can use ResuLLMe live at [https://resumellme.streamlit.app/]
 
 ## 🛠 How It Works
 ResumeLLMe now supports both OpenAI and Gemini, empowering the application to enhance résumés with even more powerful and diverse language models, providing users with smarter, more accurate career guidance.  
