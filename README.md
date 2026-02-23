@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ResuLLMe [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://resullme.streamlit.app/) [![](https://img.shields.io/github/license/IvanIsCoding/ResuLLMe)](https://github.com/IvanIsCoding/ResuLLMe/blob/main/LICENSE) ![](https://img.shields.io/badge/code%20style-black-black)
 
 ---
@@ -60,3 +61,6 @@ All contributions are welcome, but some that would particularly be useful to the
 * Adding new LaTeX templates
 * Improved prompts
 * Support for other LLMs (e.g. Bard, Claude, LLaMA)
+=======
+# ResumeLLME
+>>>>>>> f4f72138428c0ee4bb8ba8735960622b6a56262f
