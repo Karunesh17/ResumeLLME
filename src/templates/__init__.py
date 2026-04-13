@@ -18,6 +18,40 @@ template_commands = {
 }
 
 
+URL_FIELD_KEYS = {"website", "url", "linkedin", "github"}
+
+
+def sanitize_url_for_latex(url):
+    if not isinstance(url, str) or not url:
+        return url
+
+    cleaned = url.strip()
+    cleaned = cleaned.replace("{-}", "-")
+    cleaned = cleaned.replace("\\-", "-")
+    cleaned = cleaned.replace("\\textbackslash{}", "")
+    cleaned = cleaned.replace("{[}", "[").replace("{]}", "]")
+    cleaned = cleaned.replace("\\%", "%")
+
+    if cleaned.startswith("mailto:") or cleaned.startswith("tel:"):
+        return cleaned
+    if not cleaned.startswith("http://") and not cleaned.startswith("https://"):
+        cleaned = "https://" + cleaned
+    return cleaned
+
+
+def _sanitize_resume_urls(data, parent_key=None):
+    if isinstance(data, dict):
+        return {
+            key: _sanitize_resume_urls(value, key)
+            for key, value in data.items()
+        }
+    if isinstance(data, list):
+        return [_sanitize_resume_urls(item, parent_key) for item in data]
+    if isinstance(data, str) and parent_key in URL_FIELD_KEYS:
+        return sanitize_url_for_latex(data)
+    return data
+
+
 def generate_latex(template_name, json_resume, prelim_section_ordering):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -36,6 +70,7 @@ def generate_latex(template_name, json_resume, prelim_section_ordering):
     )
 
     escaped_json_resume = escape_for_latex(json_resume)
+    escaped_json_resume = _sanitize_resume_urls(escaped_json_resume)
 
     return use_template(
         template_name, latex_jinja_env, escaped_json_resume, prelim_section_ordering

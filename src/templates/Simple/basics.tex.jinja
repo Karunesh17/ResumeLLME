@@ -3,7 +3,7 @@
 \begin{center}
   {\Huge \scshape {\VAR{name}}}\\
   \BLOCK{ if address } \VAR{address} $\cdot$ \BLOCK{ endif }
-  \BLOCK{ if email } \VAR{email} $\cdot$ \BLOCK{ endif }
-  \BLOCK{ if phone } \VAR{phone} $\cdot$ \BLOCK{ endif }
-  \BLOCK{ if website } \VAR{website} \BLOCK{ endif }\
+  \BLOCK{ if email } \href{mailto:\VAR{email}}{\VAR{email}} $\cdot$ \BLOCK{ endif }
+  \BLOCK{ if phone } \href{tel:\VAR{phone|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '')}}{\VAR{phone}} $\cdot$ \BLOCK{ endif }
+  \BLOCK{ if website } \href{\BLOCK{ if website.startswith('http') }\VAR{website}\BLOCK{ else }https://\VAR{website}\BLOCK{ endif }}{\VAR{website}} \BLOCK{ endif }\
 \end{center}

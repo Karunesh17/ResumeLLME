@@ -399,29 +399,233 @@ def _resume_cache_key(cv_text, model, model_type):
 
 
 def _extract_basics_from_cv_text(cv_text):
-    lines = [line.strip() for line in (cv_text or "").splitlines() if line.strip()]
-    text = cv_text or ""
-    email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text)
-    phone_match = re.search(r"(\+?\d[\d\-\s\(\)]{7,}\d)", text)
-    url_match = re.search(r"(https?://[^\s]+|www\.[^\s]+)", text, re.IGNORECASE)
-
+    parsed = _parse_resume_fallback(cv_text)
+    contact = parsed.get("contact", {})
     return {
-        "name": lines[0] if lines else "",
-        "email": email_match.group(0) if email_match else "",
-        "phone": phone_match.group(0).strip() if phone_match else "",
-        "website": url_match.group(0) if url_match else "",
-        "address": "",
+        "name": parsed.get("name", ""),
+        "email": contact.get("email", ""),
+        "phone": contact.get("phone", ""),
+        "website": contact.get("linkedin") or contact.get("github") or "",
+        "address": contact.get("location", ""),
     }
 
 
-def _build_basic_fallback_resume(cv_text, message, model_used):
+def _is_section_header(line):
+    normalized = re.sub(r"[^A-Za-z ]", " ", line or "")
+    normalized = " ".join(normalized.split()).upper()
+    header_map = {
+        "EDUCATION": "education",
+        "EXPERIENCE": "experience",
+        "WORK EXPERIENCE": "experience",
+        "PROFESSIONAL EXPERIENCE": "experience",
+        "SKILLS": "skills",
+        "TECHNICAL SKILLS": "skills",
+        "PROJECTS": "projects",
+        "CERTIFICATIONS": "certifications",
+        "SUMMARY": "summary",
+        "PROFESSIONAL SUMMARY": "summary",
+        "OBJECTIVE": "summary",
+        "ACHIEVEMENTS": "achievements",
+    }
+    for header, key in header_map.items():
+        if normalized == header or normalized.startswith(header + " "):
+            return key
+    return None
+
+
+def _extract_contact_info(lines, text):
+    top_lines = lines[:12]
+    top_text = "\n".join(top_lines)
+    full_text = text or ""
+
+    email_match = re.search(r"[\w.+-]+@[\w-]+\.\w+", full_text)
+    phone_match = re.search(r"(\+?\d[\d\s\-\(\)]{8,}\d)", full_text)
+    linkedin_match = re.search(r"(https?://)?(www\.)?linkedin\.com/in/[A-Za-z0-9\-_]+", full_text, re.IGNORECASE)
+    github_match = re.search(r"(https?://)?(www\.)?github\.com/[A-Za-z0-9\-_]+", full_text, re.IGNORECASE)
+    location_match = re.search(
+        r"\b([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)*,\s*[A-Z]{2,}|[A-Z][a-zA-Z]+,\s*[A-Z][a-zA-Z]+)\b",
+        top_text,
+    )
+
     return {
-        "basics": _extract_basics_from_cv_text(cv_text),
+        "email": email_match.group(0) if email_match else "",
+        "phone": phone_match.group(1).strip() if phone_match else "",
+        "linkedin": linkedin_match.group(0) if linkedin_match else "",
+        "github": github_match.group(0) if github_match else "",
+        "location": location_match.group(1) if location_match else "",
+    }
+
+
+def _group_section_lines(lines):
+    section_content = {}
+    current_section = None
+
+    for line in lines[1:]:
+        section = _is_section_header(line)
+        if section:
+            current_section = section
+            section_content.setdefault(current_section, [])
+            continue
+        if current_section:
+            section_content[current_section].append(line)
+
+    return section_content
+
+
+def _parse_resume_fallback(cv_text):
+    lines = [line.strip() for line in (cv_text or "").splitlines() if line.strip()]
+    text = cv_text or ""
+    parsed = {
+        "name": lines[0] if lines else "",
+        "contact": _extract_contact_info(lines, text),
+        "summary": "",
         "education": [],
-        "awards": [],
-        "projects": [],
+        "experience": [],
         "skills": [],
-        "work": [],
+        "projects": [],
+        "certifications": [],
+        "achievements": [],
+    }
+
+    section_content = _group_section_lines(lines)
+    if section_content.get("summary"):
+        parsed["summary"] = " ".join(section_content.get("summary", []))
+
+    # Skills: split by separators and bullets.
+    skill_text = " | ".join(section_content.get("skills", []))
+    if skill_text:
+        pieces = re.split(r"[,\|\u2022;/]", skill_text)
+        parsed["skills"] = [p.strip() for p in pieces if p.strip()]
+
+    # Education parsing.
+    for line in section_content.get("education", []):
+        item = {"institution": "", "degree": "", "year": "", "gpa": ""}
+        year_match = re.search(r"\b(19|20)\d{2}\b(?:\s*[-–]\s*(19|20)\d{2}|(?:\s*-\s*Present))?", line)
+        gpa_match = re.search(r"\bGPA[:\s]*([0-4]\.\d{1,2}|[0-9]{1,2}\.\d{1,2})\b", line, re.IGNORECASE)
+
+        parts = [p.strip() for p in re.split(r"\s+\|\s+| - ", line) if p.strip()]
+        if parts:
+            item["institution"] = parts[0]
+        if len(parts) > 1:
+            item["degree"] = parts[1]
+        if year_match:
+            item["year"] = year_match.group(0)
+        if gpa_match:
+            item["gpa"] = gpa_match.group(1)
+        if any(item.values()):
+            parsed["education"].append(item)
+
+    # Experience parsing.
+    current_job = None
+    date_pattern = re.compile(r"\b(19|20)\d{2}\b(?:\s*[-–]\s*(?:Present|(19|20)\d{2}))?", re.IGNORECASE)
+    for line in section_content.get("experience", []):
+        if re.match(r"^[-*•]\s+", line):
+            if current_job is None:
+                current_job = {"company": "", "role": "", "duration": "", "bullets": []}
+            current_job["bullets"].append(re.sub(r"^[-*•]\s*", "", line).strip())
+            continue
+
+        if date_pattern.search(line) or " at " in line.lower() or "|" in line:
+            if current_job and any(current_job.values()):
+                parsed["experience"].append(current_job)
+            current_job = {"company": "", "role": "", "duration": "", "bullets": []}
+            current_job["duration"] = date_pattern.search(line).group(0) if date_pattern.search(line) else ""
+            if " at " in line.lower():
+                role, company = re.split(r"\s+at\s+", line, maxsplit=1, flags=re.IGNORECASE)
+                current_job["role"] = role.strip()
+                current_job["company"] = company.strip()
+            else:
+                parts = [p.strip() for p in re.split(r"\s+\|\s+| - ", line) if p.strip()]
+                if parts:
+                    current_job["company"] = parts[0]
+                if len(parts) > 1:
+                    current_job["role"] = parts[1]
+        elif current_job:
+            current_job["bullets"].append(line)
+
+    if current_job and any(current_job.values()):
+        parsed["experience"].append(current_job)
+
+    # Projects parsing.
+    for line in section_content.get("projects", []):
+        project = {"name": "", "description": "", "tech_stack": []}
+        if ":" in line:
+            name, desc = line.split(":", 1)
+            project["name"] = name.strip()
+            project["description"] = desc.strip()
+        else:
+            parts = [p.strip() for p in re.split(r"\s+\|\s+| - ", line, maxsplit=1) if p.strip()]
+            project["name"] = parts[0] if parts else ""
+            project["description"] = parts[1] if len(parts) > 1 else ""
+
+        tech_match = re.search(r"(Tech(?:nologies)?|Stack)[:\s]+(.+)$", line, re.IGNORECASE)
+        if tech_match:
+            project["tech_stack"] = [t.strip() for t in re.split(r"[,/|]", tech_match.group(2)) if t.strip()]
+        if project["name"] or project["description"]:
+            parsed["projects"].append(project)
+
+    parsed["certifications"] = [line for line in section_content.get("certifications", []) if line]
+    parsed["achievements"] = [line for line in section_content.get("achievements", []) if line]
+    return parsed
+
+
+def _build_basic_fallback_resume(cv_text, message, model_used):
+    parsed = _parse_resume_fallback(cv_text)
+
+    work_items = []
+    for exp in parsed.get("experience", []):
+        work_items.append({
+            "company": exp.get("company", ""),
+            "position": exp.get("role", ""),
+            "startDate": exp.get("duration", ""),
+            "endDate": "",
+            "location": "",
+            "highlights": exp.get("bullets", []),
+        })
+
+    education_items = []
+    for edu in parsed.get("education", []):
+        education_items.append({
+            "institution": edu.get("institution", ""),
+            "area": edu.get("degree", ""),
+            "additionalAreas": [],
+            "studyType": "",
+            "startDate": "",
+            "endDate": edu.get("year", ""),
+            "score": edu.get("gpa", ""),
+            "location": "",
+        })
+
+    project_items = []
+    for project in parsed.get("projects", []):
+        project_items.append({
+            "name": project.get("name", ""),
+            "description": project.get("description", ""),
+            "keywords": project.get("tech_stack", []),
+            "url": "",
+        })
+
+    skills = parsed.get("skills", [])
+    skill_items = [{"name": "Skills", "keywords": skills}] if skills else []
+
+    awards = [{"title": cert, "date": "", "awarder": "", "summary": ""} for cert in parsed.get("certifications", [])]
+    awards.extend(
+        {"title": achievement, "date": "", "awarder": "", "summary": ""}
+        for achievement in parsed.get("achievements", [])
+    )
+
+    return {
+        "basics": {
+            **_extract_basics_from_cv_text(cv_text),
+            "summary": parsed.get("summary", ""),
+            "linkedin": parsed.get("contact", {}).get("linkedin", ""),
+            "github": parsed.get("contact", {}).get("github", ""),
+        },
+        "education": education_items,
+        "awards": awards,
+        "projects": project_items,
+        "skills": skill_items,
+        "work": work_items,
         "_meta": {
             "fallback_used": True,
             "model_used": model_used,
