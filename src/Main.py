@@ -10,6 +10,16 @@ from templates import generate_latex, template_commands
 from prompt_engineering import generate_json_resume, tailor_resume
 from render import render_latex
 import json
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_generate_json_resume(cv_text, api_key, api_model, model_type):
+    return generate_json_resume(cv_text, api_key, api_model, model_type)
 
 
 def select_llm_model():
@@ -81,6 +91,11 @@ if __name__ == '__main__':
 
         model_type = select_llm_model()
         api_key, api_model = get_llm_model_and_api(model_type)
+        if not api_key:
+            st.warning(
+                f"{model_type} API key is missing. Set it in your environment (.env) or enter it above.",
+                icon="🔑",
+            )
 
         chosen_option = st.selectbox(
             "Select a template to use for your resume [(see templates)](/Template_Gallery)",
@@ -100,11 +115,25 @@ if __name__ == '__main__':
 
         if generate_button:
             try:
+                if not api_key:
+                    st.info("No API key provided. Using fallback mode.")
+
                 if improve_check:
                     with st.spinner("Tailoring the resume"):
                         text = tailor_resume(text, api_key, api_model, model_type)
 
-                json_resume = generate_json_resume(text, api_key, api_model, model_type)
+                json_resume = cached_generate_json_resume(text, api_key, api_model, model_type)
+                resume_meta = json_resume.get("_meta", {}) if isinstance(json_resume, dict) else {}
+                if resume_meta.get("fallback_used"):
+                    if resume_meta.get("error_kind") == "quota_exceeded":
+                        st.error("API quota exceeded. Please try later or use another API key.")
+                    st.info("Using fallback mode.")
+                if resume_meta.get("model_used"):
+                    st.caption(f"Model used: {resume_meta.get('model_used')}")
+
+                if isinstance(json_resume, dict) and "_meta" in json_resume:
+                    json_resume = {k: v for k, v in json_resume.items() if k != "_meta"}
+
                 latex_resume = generate_latex(chosen_option, json_resume, section_ordering)
 
                 resume_bytes = render_latex(template_commands[chosen_option], latex_resume)
